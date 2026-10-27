@@ -1,3 +1,6 @@
+# ไฟล์นี้ประกาศ "ช่องรับค่า" ของสูตร เหมือนพารามิเตอร์ของ function
+# ค่าถูกส่งมาจาก envs/prod/main.tf ตรงบล็อก module "slipplus"
+
 variable "env" {
   type        = string
   description = "Environment name (prod)"
@@ -23,6 +26,7 @@ variable "image" {
   description = "Image slug. Only used at creation, ignored on the imported Droplet"
 }
 
+# ถ้าไม่ส่งค่ามา ใช้ค่า default คือ "root"
 variable "ssh_user" {
   type        = string
   default     = "root"
@@ -46,6 +50,8 @@ variable "gcp_credentials" {
   description = "GCP service account key JSON used to docker login to Artifact Registry on the Droplet"
 }
 
+# services = map (ชื่อ -> รายละเอียด) ของบริการที่จะรัน เช่น api, web
+# แต่ละบริการต้องมี dir, image, port, host_port ส่วน environment กับ healthcheck ใส่หรือไม่ใส่ก็ได้ (optional)
 variable "services" {
   type = map(object({
     dir         = string
