@@ -2,7 +2,7 @@ terraform {
   cloud {
     organization = "PonsagonPlayGround"
     workspaces {
-      name = "slipplus-prod"
+      name = "terraform-learning"
     }
   }
 

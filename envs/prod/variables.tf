@@ -3,22 +3,34 @@ variable "droplet_id" {
   description = "ID of the existing prod Droplet, used by the one-time import in imports.tf"
 }
 
-variable "name" {
-  type        = string
-  description = "Droplet name. Must match the existing prod Droplet"
+variable "droplet_name" {
+  type = string
 }
 
-variable "region" {
-  type        = string
-  description = "DigitalOcean region slug. Must match the existing prod Droplet"
+variable "droplet_region" {
+  type = string
 }
 
-variable "size" {
-  type        = string
-  description = "Droplet size slug. Must match the existing prod Droplet"
+variable "droplet_size" {
+  type = string
 }
 
-variable "image" {
-  type        = string
-  description = "Image slug. Not applied to the imported Droplet (see modules/droplet/main.tf)"
+variable "droplet_image" {
+  type = string
+}
+
+variable "ssh_private_key" {
+  type      = string
+  sensitive = true
+}
+
+variable "gcp_credentials" {
+  type      = string
+  sensitive = true
+}
+
+# API service
+variable "api_service_env" {
+  type      = string
+  sensitive = true
 }
