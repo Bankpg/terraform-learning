@@ -1,6 +1,6 @@
 terraform {
   cloud {
-    organization = "bindzertech"
+    organization = "PonsagonPlayGround"
     workspaces {
       name = "slipplus-prod"
     }

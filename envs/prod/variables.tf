@@ -1,6 +1,6 @@
 variable "droplet_id" {
   type        = string
-  description = "ID of the existing prod Droplet, used by the one-time import block"
+  description = "ID of the existing prod Droplet, used by the one-time import in imports.tf"
 }
 
 variable "name" {
