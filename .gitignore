@@ -1,0 +1,21 @@
+# Terraform providers and plugins (very large binaries)
+.terraform/
+
+# State files (contain sensitive resource details)
+terraform.tfstate
+terraform.tfstate.backup
+*.tfstate
+*.tfstate.*
+
+# Lock info from in-progress operations
+.terraform.tfstate.lock.info
+
+# Variable files that may contain secrets
+*.tfvars
+*.tfvars.json
+
+# Override files
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
