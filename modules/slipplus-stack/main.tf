@@ -21,8 +21,21 @@ resource "digitalocean_droplet" "main" {
   lifecycle {
     # The Droplet is imported, not created. Its image is reported in a form that
     # differs from the config, and a replacement would destroy the live server.
-    # ignore_changes = ไม่ต้องสนใจถ้าช่อง image ต่างกัน
-    ignore_changes = [image]
+    # ignore_changes = ไม่ต้องสนใจถ้าช่องเหล่านี้ต่างกัน
+    # Droplet จริงสร้างจากหน้า console จึงมีค่าที่โค้ดเราไม่ได้เขียน (เช่น เปิด monitoring,
+    # droplet_agent) ถ้าไม่ ignore Terraform จะเห็นว่า "ไม่ตรงกับโค้ด" และบางช่องแก้ในที่เดิมไม่ได้
+    # จึงสรุปว่าต้อง replace (ลบแล้วสร้างใหม่) ซึ่งอันตรายกับเครื่อง prod
+    ignore_changes = [
+      image,
+      monitoring,
+      droplet_agent,
+      ipv6,
+      backups,
+      tags,
+      user_data,
+      ssh_keys,
+      vpc_uuid,
+    ]
     # prevent_destroy = ห้ามลบเด็ดขาด ถ้า plan ต้องลบเครื่องนี้ จะ error ทันที
     # (ตัวนี้แหละที่กันไม่ให้เซิร์ฟเวอร์จริงถูกลบตอน plan ขึ้นว่า replace)
     prevent_destroy = true
