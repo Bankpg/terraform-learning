@@ -12,7 +12,8 @@ locals {
   # โดเมนจริง slippass.co มี DNS ของมันเองอยู่แล้ว Terraform ไม่แตะ
   learning_api_hosts = var.domain == "" ? [] : ["api.${var.domain}"]
   learning_web_hosts = var.domain == "" ? [] : ["web.${var.domain}"]
-  learning_hosts     = concat(local.learning_api_hosts, local.learning_web_hosts)
+  learning_landing_hosts = var.domain == "" ? [] : ["${var.domain}"]
+  learning_hosts     = concat(local.learning_api_hosts, local.learning_web_hosts, local.learning_landing_hosts)
 }
 
 # DNS: สร้าง record ใน Cloudflare ให้ชื่อเว็บชี้มาที่ IP ของ Droplet
@@ -34,7 +35,7 @@ module "slippass" {
 
   # เว็บที่ไม่ได้อยู่ใน services (บริการพอร์ต 3100 รันอยู่ก่อนแล้ว) คงไว้ใน Caddyfile เป็นค่าคงที่
   static_routes = {
-    "slippass.co" = "127.0.0.1:3100"
+    # "slippass.co" = "127.0.0.1:3100"
   }
 
   # ค่าเครื่อง: ใส่ตรงๆ ในโค้ด (ไม่ลับ) ต้องตรงกับเครื่องจริงใน DigitalOcean เป๊ะ
@@ -50,7 +51,7 @@ module "slippass" {
   # services = รายการบริการที่จะรันบน Droplet (ชื่อ api, web)
   services = {
     api = {
-      dir = "/opt/slippass-tf/api" # โฟลเดอร์บน Droplet ที่จะวางไฟล์ compose
+      dir = "/app/slippass/api" # โฟลเดอร์บน Droplet ที่จะวางไฟล์ compose
       # image + tag: แก้เลข v0.0.10 เป็นเวอร์ชันใหม่ แล้ว push = deploy
       image     = "asia-southeast1-docker.pkg.dev/livezer-dev/bindzertech-images/slippass-api:v0.0.10"
       hostnames = concat(["api.slippass.co"], local.learning_api_hosts) # ชื่อเว็บของ api: โดเมนจริง + โดเมน learning (Caddy รับแล้วส่งต่อ)
@@ -69,12 +70,22 @@ module "slippass" {
       }
     }
     web = {
-      dir         = "/opt/slippass-tf/web"
+      dir         = "/app/slippass/web"
       image       = "asia-southeast1-docker.pkg.dev/livezer-dev/bindzertech-images/slippass-web:v0.0.14"
       hostnames   = concat(["web.slippass.co"], local.learning_web_hosts)
       port        = 8080
       host_port   = 8081 # ใช้พอร์ตเดียวกับของจริง ต้องหยุดคอนเทนเนอร์เดิมก่อน apply
       environment = []   # web ไม่มี env (ถูกฝังตอน build image แล้ว)
+      healthcheck = null # ไม่มี healthcheck
+    }
+    
+    landing = {
+      dir         = "/app/slippass/landing"
+      image       = "asia-southeast1-docker.pkg.dev/livezer-dev/bindzertech-images/slippass-landing:v0.0.5"
+      hostnames   = concat(["slippass.co"], local.learning_landing_hosts)
+      port        = 3000
+      host_port   = 3100 # ใช้พอร์ตเดียวกับของจริง ต้องหยุดคอนเทนเนอร์เดิมก่อน apply
+      environment = []   # landing ไม่มี env (ถูกฝังตอน build image แล้ว)
       healthcheck = null # ไม่มี healthcheck
     }
   }
