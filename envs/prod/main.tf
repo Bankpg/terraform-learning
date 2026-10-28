@@ -51,7 +51,7 @@ module "slippass" {
   # services = รายการบริการที่จะรันบน Droplet (ชื่อ api, web)
   services = {
     api = {
-      dir = "/app/slippass/api" # โฟลเดอร์บน Droplet ที่จะวางไฟล์ compose
+      dir = "/root/app/api" # โฟลเดอร์บน Droplet ที่จะวางไฟล์ compose
       # image + tag: แก้เลข v0.0.10 เป็นเวอร์ชันใหม่ แล้ว push = deploy
       image     = "asia-southeast1-docker.pkg.dev/livezer-dev/bindzertech-images/slippass-api:v0.0.10"
       hostnames = concat(["api.slippass.co"], local.learning_api_hosts) # ชื่อเว็บของ api: โดเมนจริง + โดเมน learning (Caddy รับแล้วส่งต่อ)
@@ -70,7 +70,7 @@ module "slippass" {
       }
     }
     web = {
-      dir         = "/app/slippass/web"
+      dir         = "/root/app/web"
       image       = "asia-southeast1-docker.pkg.dev/livezer-dev/bindzertech-images/slippass-web:v0.0.14"
       hostnames   = concat(["web.slippass.co"], local.learning_web_hosts)
       port        = 8080
@@ -80,7 +80,7 @@ module "slippass" {
     }
     
     landing = {
-      dir         = "/app/slippass/landing"
+      dir         = "/root/app/landing"
       image       = "asia-southeast1-docker.pkg.dev/livezer-dev/bindzertech-images/slippass-landing:v0.0.5"
       hostnames   = concat(["slippass.co"], local.learning_landing_hosts)
       port        = 3000
