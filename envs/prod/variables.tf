@@ -4,6 +4,17 @@
 
 # (ค่าของ Droplet ไม่ใช่ variable แล้ว ใส่ตรงใน main.tf และ imports.tf)
 
+# ---- ค่าไม่ลับ: ไปกรอกที่ HCP -> Variables (ชนิด Terraform variable) ----
+variable "domain" {
+  type        = string
+  description = "โดเมนหลักใน Cloudflare เช่น example.com (hostname ของ api/web จะเป็น tf-api.<domain>, tf-web.<domain>)"
+}
+
+variable "cloudflare_zone_id" {
+  type        = string
+  description = "Cloudflare Zone ID ของโดเมน (หน้า Overview ของโดเมนใน Cloudflare)"
+}
+
 # ---- ค่าลับ: sensitive = true แปลว่า Terraform จะซ่อนค่าไม่ให้โชว์ในล็อก ----
 variable "ssh_private_key" {
   type      = string

@@ -1,5 +1,5 @@
 # ไฟล์นี้ประกาศ "ช่องรับค่า" ของสูตร เหมือนพารามิเตอร์ของ function
-# ค่าถูกส่งมาจาก envs/prod/main.tf ตรงบล็อก module "slipplus"
+# ค่าถูกส่งมาจาก envs/prod/main.tf ตรงบล็อก module "slippass"
 
 variable "env" {
   type        = string
@@ -58,6 +58,7 @@ variable "services" {
     image       = string
     port        = number
     host_port   = number
+    hostname    = optional(string) # ชื่อเว็บที่ให้ Caddy รับ (ถ้าไม่ใส่ = ไม่เปิดสู่อินเทอร์เน็ต)
     environment = optional(list(object({ name = string, value = string })), [])
     healthcheck = optional(object({
       test     = list(string)
@@ -67,4 +68,10 @@ variable "services" {
     }))
   }))
   description = "Map of compose services to deploy on the Droplet"
+}
+
+variable "proxy_dir" {
+  type        = string
+  default     = "/opt/slippass-tf/proxy"
+  description = "Folder on the Droplet for the Caddy compose file and Caddyfile"
 }

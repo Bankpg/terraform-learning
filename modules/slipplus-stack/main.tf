@@ -11,7 +11,7 @@ terraform {
 }
 
 # resource "ชนิด" "ชื่อ" = ของที่ Terraform ดูแล ที่นี่คือ Droplet ชื่อภายใน Terraform ว่า "main"
-# (ที่อ้างถึงใน imports.tf ว่า module.slipplus.digitalocean_droplet.main)
+# (ที่อ้างถึงใน imports.tf ว่า module.slippass.digitalocean_droplet.main)
 resource "digitalocean_droplet" "main" {
   name   = var.name   # ต้องตรงกับชื่อจริง ถ้าไม่ตรง Terraform จะอยากสร้างเครื่องใหม่
   region = var.region # ต้องตรงกับของจริง (แก้ภายหลังไม่ได้ ต้องสร้างใหม่)

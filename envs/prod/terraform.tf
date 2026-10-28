@@ -17,6 +17,10 @@ terraform {
       source  = "digitalocean/digitalocean"
       version = "~> 2.0" # ใช้เวอร์ชัน 2.x ล่าสุด แต่ไม่ขึ้น 3.0 เอง
     }
+    cloudflare = {
+      source  = "cloudflare/cloudflare"
+      version = "~> 4.0"
+    }
   }
 
   required_version = ">= 1.5" # เวอร์ชัน Terraform ต่ำสุดที่ใช้ได้
@@ -25,4 +29,8 @@ terraform {
 provider "digitalocean" {
   # Token is read from DIGITALOCEAN_TOKEN env var set in HCP Terraform
   # (ไม่ต้องเขียน token ในโค้ด ไปตั้งเป็น Environment variable ใน HCP แทน)
+}
+
+provider "cloudflare" {
+  # Token is read from CLOUDFLARE_API_TOKEN env var set in HCP Terraform (Sensitive)
 }
