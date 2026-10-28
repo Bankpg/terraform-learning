@@ -10,10 +10,10 @@ output "ipv4_address" {
 locals {
   # โดเมน learning (ว่างได้: ถ้ายังไม่ตั้ง domain ใน HCP จะไม่มีโดเมน learning)
   # โดเมนจริง slippass.co มี DNS ของมันเองอยู่แล้ว Terraform ไม่แตะ
-  learning_api_hosts = var.domain == "" ? [] : ["api.${var.domain}"]
-  learning_web_hosts = var.domain == "" ? [] : ["web.${var.domain}"]
+  learning_api_hosts     = var.domain == "" ? [] : ["api.${var.domain}"]
+  learning_web_hosts     = var.domain == "" ? [] : ["web.${var.domain}"]
   learning_landing_hosts = var.domain == "" ? [] : ["${var.domain}"]
-  learning_hosts     = concat(local.learning_api_hosts, local.learning_web_hosts, local.learning_landing_hosts)
+  learning_hosts         = concat(local.learning_api_hosts, local.learning_web_hosts, local.learning_landing_hosts)
 }
 
 # DNS: สร้าง record ใน Cloudflare ให้ชื่อเว็บชี้มาที่ IP ของ Droplet
@@ -78,7 +78,7 @@ module "slippass" {
       environment = []   # web ไม่มี env (ถูกฝังตอน build image แล้ว)
       healthcheck = null # ไม่มี healthcheck
     }
-    
+
     landing = {
       dir         = "/root/app/landing"
       image       = "asia-southeast1-docker.pkg.dev/livezer-dev/bindzertech-images/slippass-landing:v0.0.5"

@@ -41,3 +41,8 @@ resource "digitalocean_droplet" "main" {
     prevent_destroy = true
   }
 }
+
+output "ipv4_address" {
+  value       = digitalocean_droplet.main.ipv4_address
+  description = "Public IPv4 address of the Droplet"
+}

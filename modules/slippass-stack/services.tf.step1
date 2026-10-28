@@ -97,8 +97,3 @@ resource "terraform_data" "service" {
   # ต้อง login registry ให้เสร็จก่อน ถึงจะดึง image ได้
   depends_on = [terraform_data.registry_login]
 }
-
-output "ipv4_address" {
-  value       = digitalocean_droplet.main.ipv4_address
-  description = "Public IPv4 address of the Droplet"
-}
