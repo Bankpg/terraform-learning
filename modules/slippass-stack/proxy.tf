@@ -1,40 +1,35 @@
 # ไฟล์นี้คือ "ทางเข้าจากอินเทอร์เน็ต" (เทียบเท่า alb.tf ของ petio)
-# ใช้ Caddy (reverse proxy) รับพอร์ต 80/443 บน Droplet แล้วส่งต่อเข้า api/web ตามชื่อเว็บ
-# Caddy ขอและต่ออายุใบรับรอง HTTPS (Let's Encrypt) ให้เองอัตโนมัติ
+# บน Droplet มี Caddy (บริการของเครื่อง ไม่ใช่ docker) รับพอร์ต 80/443 อยู่แล้ว
+# เราไม่ลงตัวใหม่ แต่ให้ Terraform เขียนไฟล์ /etc/caddy/Caddyfile ของตัวเดิม แล้วสั่ง reload
+# (Terraform เป็นเจ้าของไฟล์นี้ ใครแก้มือบนเครื่องจะถูกทับตอน apply)
 
 locals {
-  # เฉพาะบริการที่ตั้ง hostname ไว้เท่านั้นที่จะเปิดสู่อินเทอร์เน็ต
-  public_services = { for k, svc in var.services : k => svc if svc.hostname != null }
+  # ทุก hostname ของแต่ละบริการ -> ส่งต่อไปที่พอร์ตบนเครื่อง (127.0.0.1:host_port)
+  service_routes = {
+    for h in flatten([
+      for k, svc in var.services : [
+        for hostname in svc.hostnames : { host = hostname, upstream = "127.0.0.1:${svc.host_port}" }
+      ]
+    ]) : h.host => h.upstream
+  }
 
-  # Caddyfile: หนึ่งบล็อกต่อหนึ่ง hostname -> ส่งต่อไปที่พอร์ตบนเครื่อง (127.0.0.1:host_port)
-  caddyfile = join("\n", [
-    for k, svc in local.public_services :
-    "${svc.hostname} {\n  reverse_proxy 127.0.0.1:${svc.host_port}\n}\n"
-  ])
+  # รวมกับเว็บคงที่ที่ Terraform ไม่ได้ดูแลบริการ (เช่น slippass.co -> 3100)
+  all_routes = merge(var.static_routes, local.service_routes)
 
-  # network_mode = host ให้ Caddy เห็น 127.0.0.1 ของเครื่องจริง (เพื่อคุยกับ api/web ที่ bind ไว้ที่นั่น)
-  caddy_compose = jsonencode({
-    services = {
-      caddy = {
-        image        = "caddy:2.8.4-alpine"
-        restart      = "unless-stopped"
-        network_mode = "host"
-        volumes = [
-          "./Caddyfile:/etc/caddy/Caddyfile:ro",
-          "caddy_data:/data", # เก็บใบรับรอง HTTPS ไม่ให้หายตอนสร้างคอนเทนเนอร์ใหม่
-        ]
-      }
-    }
-    volumes = { caddy_data = {} }
-  })
+  # Caddyfile: auto_https disable_redirects ตามของเดิม (เปิดได้ทั้ง http และ https ไม่บังคับ redirect)
+  # แต่ละ hostname ได้บล็อก "http://ชื่อ, https://ชื่อ" ส่งต่อไป upstream
+  caddyfile = join("\n", concat(
+    ["{\n  auto_https disable_redirects\n}\n"],
+    [
+      for host, upstream in local.all_routes :
+      "http://${host}, https://${host} {\n  reverse_proxy ${upstream}\n}\n"
+    ]
+  ))
 }
 
 resource "terraform_data" "proxy" {
-  # มี hostname อย่างน้อย 1 ตัวถึงจะติดตั้ง Caddy
-  count = length(local.public_services) > 0 ? 1 : 0
-
-  # ถ้า Caddyfile หรือ compose เปลี่ยน ให้รันใหม่
-  triggers_replace = [sha256(local.caddyfile), sha256(local.caddy_compose)]
+  # ถ้า Caddyfile เปลี่ยน ให้รันใหม่
+  triggers_replace = [sha256(local.caddyfile)]
 
   connection {
     type        = "ssh"
@@ -43,33 +38,23 @@ resource "terraform_data" "proxy" {
     private_key = var.ssh_private_key
   }
 
-  provisioner "remote-exec" {
-    inline = ["mkdir -p ${var.proxy_dir}"]
-  }
-
+  # 1) อัปโหลดไว้ที่ /tmp ก่อน ยังไม่แตะไฟล์จริง
   provisioner "file" {
     content     = local.caddyfile
-    destination = "${var.proxy_dir}/Caddyfile"
+    destination = "/tmp/slippass-Caddyfile"
   }
 
-  provisioner "file" {
-    content     = local.caddy_compose
-    destination = "${var.proxy_dir}/docker-compose.yml"
-  }
-
-  # up -d = รัน/สร้างใหม่ถ้า compose เปลี่ยน, caddy reload = โหลด Caddyfile ใหม่โดยไม่ตัดการเชื่อมต่อ
+  # 2) ตรวจ syntax ก่อน (ถ้าผิดจะหยุด ไม่แตะของจริง) -> สำรองไฟล์เดิมไว้ครั้งแรก -> วางไฟล์ใหม่ -> reload
   provisioner "remote-exec" {
     inline = [
-      "cd ${var.proxy_dir} && docker compose up -d --remove-orphans",
-      "cd ${var.proxy_dir} && docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile",
+      "caddy validate --config /tmp/slippass-Caddyfile --adapter caddyfile",
+      "cp -n /etc/caddy/Caddyfile /etc/caddy/Caddyfile.before-terraform",
+      "install -m 644 /tmp/slippass-Caddyfile /etc/caddy/Caddyfile",
+      "rm -f /tmp/slippass-Caddyfile",
+      "systemctl reload caddy",
     ]
   }
 
   # api/web ต้องรันก่อน Caddy ถึงจะส่งต่อได้
   depends_on = [terraform_data.service]
-}
-
-output "host_headers" {
-  value       = [for k, svc in local.public_services : svc.hostname]
-  description = "Public hostnames served by the proxy (used by the DNS module)"
 }

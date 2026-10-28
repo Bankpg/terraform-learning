@@ -58,7 +58,7 @@ variable "services" {
     image       = string
     port        = number
     host_port   = number
-    hostname    = optional(string) # ชื่อเว็บที่ให้ Caddy รับ (ถ้าไม่ใส่ = ไม่เปิดสู่อินเทอร์เน็ต)
+    hostnames   = optional(list(string), []) # ชื่อเว็บที่ให้ Caddy รับแล้วส่งต่อมาที่บริการนี้ (ว่าง = ไม่เปิดสู่อินเทอร์เน็ต)
     environment = optional(list(object({ name = string, value = string })), [])
     healthcheck = optional(object({
       test     = list(string)
@@ -70,8 +70,9 @@ variable "services" {
   description = "Map of compose services to deploy on the Droplet"
 }
 
-variable "proxy_dir" {
-  type        = string
-  default     = "/opt/slippass-tf/proxy"
-  description = "Folder on the Droplet for the Caddy compose file and Caddyfile"
+# เว็บที่ Terraform ไม่ได้ดูแลบริการ แต่ต้องคงไว้ใน Caddyfile (ชื่อเว็บ -> ปลายทาง)
+variable "static_routes" {
+  type        = map(string)
+  default     = {}
+  description = "Hostname -> upstream (host:port) kept in the Caddyfile but not managed by Terraform"
 }
